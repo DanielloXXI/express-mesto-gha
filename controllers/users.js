@@ -15,7 +15,6 @@ const getUserById = (req, res) => {
     .then((user) => res.status(200).send(user))
     // данные не записались, вернём ошибку
     .catch((err) => {
-      console.log(err.name);
       if (err.name === 'CastError') {
         return res.status(400)
           .send({ message: 'Bad Request' });
@@ -65,7 +64,6 @@ const updateUser = (request, response) => {
     .orFail()
     .then((user) => response.status(200).send(user))
     .catch((err) => {
-      console.log(err.message);
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return response.status(400)
           .send({ message: 'Invalid data to update user' });
