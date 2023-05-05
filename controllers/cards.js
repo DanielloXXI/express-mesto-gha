@@ -21,16 +21,6 @@ const deleteCard = (request, response) => {
       return response.status(200)
         .send(card);
     })
-    .findByIdAndRemove(cardId)
-    .then((card) => {
-      if (!card) {
-        return response.status(404)
-          .send({ message: 'Not found: Invalid _id' });
-      }
-
-      return response.status(200)
-        .send(card);
-    })
     .catch((err) => {
       if (err.name === 'CastError') {
         response.status(400)
