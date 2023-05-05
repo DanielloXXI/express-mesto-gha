@@ -9,7 +9,9 @@ const getAllUsers = (req, res) => {
 };
 
 const getUserById = (req, res) => {
-  User.findById(req.params.userId)
+  const { userId } = req.params;
+  User.findById(userId)
+    .orFail()
     .then((user) => res.status(200).send({ data: user }))
     // данные не записались, вернём ошибку
     .catch((err) => {
