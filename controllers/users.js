@@ -4,14 +4,28 @@ const getAllUsers = (req, res) => {
   User.find({})
     .then((users) => res.status(200).send({ data: users }))
     // данные не записались, вернём ошибку
-    .catch((err) => res.status(500).send(err));
+    .catch((err) => res.status(500)
+      .send({ message: err.message }));
 };
 
 const getUserById = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => res.status(200).send({ data: user }))
     // данные не записались, вернём ошибку
-    .catch((err) => res.status(500).send(err));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(400)
+          .send({ message: 'Bad Request' });
+      }
+
+      if (err.name === 'DocumentNotFoundError') {
+        return res.status(404)
+          .send({ message: 'User with _id cannot be found' });
+      }
+
+      return res.status(500)
+        .send({ message: err.message });
+    });
 };
 
 const createUser = (req, res) => {
@@ -19,7 +33,15 @@ const createUser = (req, res) => {
   User.create({ name, about, avatar })
     .then((user) => res.status(201).send({ data: user }))
     // данные не записались, вернём ошибку
-    .catch((err) => res.status(500).send(err));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400)
+          .send({ message: 'Invalid data to create user' });
+      } else {
+        res.status(500)
+          .send({ message: err.message });
+      }
+    });
 };
 
 const updateUser = (request, response) => {
@@ -38,9 +60,16 @@ const updateUser = (request, response) => {
       },
     )
     .then((user) => response.status(200).send(user))
-    .catch((err) => response.status(500).send(err));
-};
+    .catch((err) => {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return response.status(400)
+          .send({ message: 'Invalid data to update user' });
+      }
 
+      return response.status(500)
+        .send({ message: err.message });
+    });
+};
 const updateAvatar = (request, response) => {
   const { avatar } = request.body;
 
@@ -54,7 +83,15 @@ const updateAvatar = (request, response) => {
       },
     )
     .then((user) => response.status(200).send(user))
-    .catch((err) => response.status(500).send(err));
+    .catch((err) => {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        response.status(400)
+          .send({ message: 'Invalid data to update avatar' });
+      } else {
+        response.status(500)
+          .send({ message: err.message });
+      }
+    });
 };
 
 module.exports = {

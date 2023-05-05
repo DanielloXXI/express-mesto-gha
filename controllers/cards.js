@@ -21,7 +21,25 @@ const deleteCard = (request, response) => {
       return response.status(200)
         .send(card);
     })
-    .catch((err) => response.status(500).send(err));
+    .findByIdAndRemove(cardId)
+    .then((card) => {
+      if (!card) {
+        return response.status(404)
+          .send({ message: 'Not found: Invalid _id' });
+      }
+
+      return response.status(200)
+        .send(card);
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        response.status(400)
+          .send({ message: 'Card with _id cannot be found' });
+      } else {
+        response.status(500)
+          .send({ message: err.message });
+      }
+    });
 };
 
 const createCard = (request, response) => {
@@ -31,7 +49,15 @@ const createCard = (request, response) => {
   cardSchema
     .create({ name, link, owner })
     .then((card) => response.status(201).send(card))
-    .catch((err) => response.status(500).send(err));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        response.status(400)
+          .send({ message: 'Invalid data for card creation' });
+      } else {
+        response.status(500)
+          .send({ message: err.message });
+      }
+    });
 };
 
 const addLike = (request, response) => {
@@ -50,7 +76,15 @@ const addLike = (request, response) => {
       return response.status(200)
         .send(card);
     })
-    .catch((err) => response.status(500).send(err));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return response.status(400)
+          .send({ message: 'Invalid data to add like' });
+      }
+
+      return response.status(500)
+        .send({ message: err.message });
+    });
 };
 
 const deleteLike = (request, response) => {
@@ -69,7 +103,15 @@ const deleteLike = (request, response) => {
       return response.status(200)
         .send(card);
     })
-    .catch((err) => response.status(500).send(err));
+    .catch((err) => {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return response.status(400)
+          .send({ message: 'Invalid data to delete like' });
+      }
+
+      return response.status(500)
+        .send({ message: err.message });
+    });
 };
 
 module.exports = {
