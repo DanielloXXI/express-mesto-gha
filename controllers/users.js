@@ -9,7 +9,7 @@ const getAllUsers = (req, res) => {
 };
 
 const getUserById = (req, res) => {
-  const { userId } = req.params.userId;
+  const { userId } = req.params;
   User.findById(userId)
     .orFail()
     .then((user) => res.status(200).send(user))
