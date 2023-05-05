@@ -2,7 +2,7 @@ const User = require('../models/user');
 
 const getAllUsers = (req, res) => {
   User.find({})
-    .then((users) => res.status(200).send({ data: users }))
+    .then((users) => res.status(200).send(users))
     // данные не записались, вернём ошибку
     .catch((err) => res.status(500)
       .send({ message: err.message }));
@@ -12,7 +12,7 @@ const getUserById = (req, res) => {
   const { userId } = req.params;
   User.findById(userId)
     .orFail()
-    .then((user) => res.status(200).send({ data: user }))
+    .then((user) => res.status(200).send(user))
     // данные не записались, вернём ошибку
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -33,7 +33,7 @@ const getUserById = (req, res) => {
 const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
-    .then((user) => res.status(201).send({ data: user }))
+    .then((user) => res.status(201).send(user))
     // данные не записались, вернём ошибку
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -67,7 +67,10 @@ const updateUser = (request, response) => {
         return response.status(400)
           .send({ message: 'Invalid data to update user' });
       }
-
+      if (err.name === 'DocumentNotFoundError') {
+        return response.status(404)
+          .send({ message: 'User with _id cannot be found' });
+      }
       return response.status(500)
         .send({ message: err.message });
     });
@@ -87,12 +90,14 @@ const updateAvatar = (request, response) => {
     .then((user) => response.status(200).send(user))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        response.status(400)
+        return response.status(400)
           .send({ message: 'Invalid data to update avatar' });
-      } else {
-        response.status(500)
-          .send({ message: err.message });
       }
+      if (err.name === 'DocumentNotFoundError') {
+        return response.status(404)
+          .send({ message: 'User with _id cannot be found' });
+      }
+      return response.status(500).send({ message: err.message });
     });
 };
 

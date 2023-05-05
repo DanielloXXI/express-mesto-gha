@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
   name: { // у пользователя есть имя — опишем требования к имени в схеме:
@@ -16,7 +17,12 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     required: [true, 'Поле "avatar" должно быть заполнено'],
+    validate: {
+      validator: (v) => validator.isURL(v),
+      message: 'Некорректный URL',
+    },
   },
-});
+  __v: { type: Number, select: false },
 
+});
 module.exports = mongoose.model('user', userSchema);
