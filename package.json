@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon index.js",
+    "dev": "nodemon app.js",
     "lint": "npx eslint ."
   },
   "repository": {
@@ -13,7 +13,7 @@
     "url": "git+https://github.com/DanielloXXI/express-mesto-gha.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Daniello Alonso",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/DanielloXXI/express-mesto-gha/issues"

@@ -9,12 +9,13 @@ const getAllUsers = (req, res) => {
 };
 
 const getUserById = (req, res) => {
-  const { userId } = req.params;
+  const { userId } = req.params.userId;
   User.findById(userId)
     .orFail()
     .then((user) => res.status(200).send(user))
     // данные не записались, вернём ошибку
     .catch((err) => {
+      console.log(err.name);
       if (err.name === 'CastError') {
         return res.status(400)
           .send({ message: 'Bad Request' });
@@ -61,8 +62,10 @@ const updateUser = (request, response) => {
         runValidators: true,
       },
     )
+    .orFail()
     .then((user) => response.status(200).send(user))
     .catch((err) => {
+      console.log(err.message);
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return response.status(400)
           .send({ message: 'Invalid data to update user' });
@@ -87,6 +90,7 @@ const updateAvatar = (request, response) => {
         runValidators: true,
       },
     )
+    .orFail()
     .then((user) => response.status(200).send(user))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
