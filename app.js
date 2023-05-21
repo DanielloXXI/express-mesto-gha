@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
+const { errors } = require('celebrate');
 const rateLimit = require('express-rate-limit');
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
@@ -20,6 +21,7 @@ app.use(limiter);
 app.use(helmet());
 app.use(cookieParser()); // подключаем парсер кук как мидлвэр
 app.use(bodyParser.json());
+app.use(errors());
 app.post('/signup', createUser);
 app.post('/signin', login);
 app.use(auth);
