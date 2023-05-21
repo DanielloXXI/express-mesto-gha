@@ -142,14 +142,14 @@ const login = (req, res) => {
         'some-secret-key',
         { expiresIn: '7d' },
       );
-      // res.send({ token });
-      res
-        .cookie('jwt', token, {
-          maxAge: 3600000,
-          httpOnly: true,
-          sameSite: true,
-        })
-        .end();
+      res.send({ token });
+      // res
+      //   .cookie('jwt', token, {
+      //     maxAge: 3600000,
+      //     httpOnly: true,
+      //     sameSite: true,
+      //   })
+      //   .end();
     })
     .catch((err) => {
       // ошибка аутентификации
