@@ -55,7 +55,7 @@ const getMe = (req, res) => {
 
 const createUser = (req, res) => {
   bcrypt.hash(req.body.password, 10)
-    .then((hash) => User.Create({
+    .then((hash) => User.create({
       name: req.body.name,
       about: req.body.about,
       avatar: req.body.avatar,
