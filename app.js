@@ -1,9 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-
+const auth = require('./middlewares/auth');
+const { createUser, login } = require('./controllers/users');
 const router = require('./routes/router');
 
 const { PORT = 3000 } = process.env;
@@ -16,15 +18,26 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 app.use(helmet());
+app.use(cookieParser()); // подключаем парсер кук как мидлвэр
 app.use(bodyParser.json());
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6454da203ccb77f4c70deb3a',
-  };
+app.post('/signup', createUser);
+app.post('/signin', login);
+app.use(auth);
+app.use('/', router);
+app.use((err, req, res, next) => {
+  // если у ошибки нет статуса, выставляем 500
+  const { statusCode = 500, message } = err;
 
+  res
+    .status(statusCode)
+    .send({
+      // проверяем статус и выставляем сообщение в зависимости от него
+      message: statusCode === 500
+        ? 'На сервере произошла ошибка'
+        : message,
+    });
   next();
 });
-app.use('/', router);
 
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 });
