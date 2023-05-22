@@ -15,14 +15,18 @@ const getAllUsers = (req, res, next) => {
 const getUserById = (req, res, next) => {
   const { userId } = req.params;
   User.findById(userId)
+    .orFail()
     .then((user) => {
-      if (user) return res.send({ user });
-
-      throw new NotFoundError('Пользователь с таким id не найден');
+      const {
+        _id, name, about, avatar, email,
+      } = user;
+      res.send({
+        _id, name, about, avatar, email,
+      });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new InaccurateDataError('Передан некорректный id'));
+      if (err.name === 'DocumentNotFoundError') {
+        next(new NotFoundError({ message: 'пользователь с таким id - отсутствует' }));
       } else {
         next(err);
       }
@@ -48,11 +52,11 @@ const getMe = (req, res, next) => {
 
 const createUser = (req, res, next) => {
   const {
-    email,
-    password,
     name = 'Жак-Ив Кусто',
     about = 'Исследователь',
     avatar = 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    email,
+    password,
   } = req.body;
 
   bcrypt.hash(password, 10)
@@ -100,14 +104,12 @@ const updateUser = (request, response, next) => {
         runValidators: true,
       },
     )
-    .then((user) => {
-      if (user) return response.send({ user });
-
-      throw new NotFoundError('Пользователь с таким id не найден');
-    })
+    .orFail()
+    .then((user) => response.status(200)
+      .send({ data: user }))
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(new InaccurateDataError('Переданы некорректные данные при обновлении профиля пользователя'));
+      if (err.name === 'DocumentNotFoundError') {
+        next(new NotFoundError('пользователь с таким id - отсутствует'));
       } else {
         next(err);
       }
@@ -128,21 +130,18 @@ const updateAvatar = (request, response, next) => {
         runValidators: true,
       },
     )
-    .then((user) => {
-      if (user) return response.send({ user });
-
-      throw new NotFoundError('Пользователь с таким id не найден');
-    })
+    .then((user) => response.status(200)
+      .send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(new InaccurateDataError('Переданы некорректные данные при обновлении профиля пользователя'));
+      if (err.name === 'DocumentNotFoundError') {
+        next(new NotFoundError('пользователь с таким id - отсутствует'));
       } else {
         next(err);
       }
     });
 };
 
-function login(req, res, next) {
+const login = (req, res, next) => {
   const { email, password } = req.body;
   User.findUserByCredentials(email, password)
     .then((user) => {
@@ -150,7 +149,7 @@ function login(req, res, next) {
       res.status(200).send({ token });
     })
     .catch(next);
-}
+};
 
 module.exports = {
   getAllUsers,
