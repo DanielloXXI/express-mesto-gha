@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
 const rateLimit = require('express-rate-limit');
-const auth = require('./middlewares/auth');
 const router = require('./routes/router');
 
 const { PORT = 3000 } = process.env;
@@ -21,7 +20,6 @@ app.use(helmet());
 app.use(cookieParser()); // подключаем парсер кук как мидлвэр
 app.use(bodyParser.json());
 app.use(errors());
-app.use(auth);
 app.use('/', router);
 app.use((err, req, res, next) => {
   // если у ошибки нет статуса, выставляем 500

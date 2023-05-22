@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../models/user');
-const UnauthorizedError = require('../errors/UnauthorizedError');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
 const InaccurateDataError = require('../errors/InaccurateDataError');
@@ -145,21 +144,10 @@ const updateAvatar = (request, response, next) => {
 
 function login(req, res, next) {
   const { email, password } = req.body;
-
-  User
-    .findUserByCredentials(email, password)
+  User.findUserByCredentials(email, password)
     .then((user) => {
-      if (user._id) {
-        const token = jwt.sign(
-          { _id: user._id },
-          'some-secret-key',
-          { expiresIn: '7d' },
-        );
-
-        return res.send({ token });
-      }
-
-      throw new UnauthorizedError('Неправильные почта или пароль');
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.status(200).send({ token });
     })
     .catch(next);
 }
