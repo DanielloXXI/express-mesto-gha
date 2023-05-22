@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
       validator: (v) => validator.isStrongPassword(v),
       message: 'Придумайте пароль посложнее',
     },
-    // select: false,
+    select: false,
   },
   __v: { type: Number, select: false },
 
