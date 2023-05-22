@@ -1,106 +1,111 @@
 const cardSchema = require('../models/card');
+const InaccurateDataError = require('../errors/InaccurateDataError');
+const ForbiddenError = require('../errors/ForbiddenError');
+const NotFoundError = require('../errors/NotFoundError');
 
-const getCards = (request, response) => {
+const getCards = (request, response, next) => {
   cardSchema
     .find({})
-    .then((cards) => response.status(200).send(cards))
-    .catch((err) => response.status(500).send({ message: err.message }));
+    .populate(['owner', 'likes'])
+    .then((cards) => response.send({ data: cards }))
+    .catch(next);
 };
 
-const deleteCard = (request, response) => {
-  const { cardId } = request.params;
+const deleteCard = (request, response, next) => {
+  const { id: cardId } = request.params;
+  const { userId } = request.user;
 
   cardSchema
-    .findByIdAndRemove(cardId)
-    .then((card) => {
-      if (!card) {
-        return response.status(404)
-          .send({ message: 'Not found: Invalid _id' });
-      }
-
-      return response.status(200)
-        .send(card);
+    .findById({
+      _id: cardId,
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        response.status(400)
-          .send({ message: 'Card with _id cannot be found' });
-      } else {
-        response.status(500)
-          .send({ message: err.message });
-      }
-    });
+    .then((card) => {
+      if (!card) throw new NotFoundError('Данные по указанному id не найдены');
+
+      const { owner: cardOwnerId } = card;
+      if (cardOwnerId.valueOf() !== userId) throw new ForbiddenError('Нет прав доступа');
+
+      card
+        .remove()
+        .then(() => response.send({ data: card }))
+        .catch(next);
+    })
+    .catch(next);
 };
 
-const createCard = (request, response) => {
-  const { name, link } = request.body;
-  const owner = request.user._id;
+function createCard(req, res, next) {
+  const { name, link } = req.body;
+  const { userId } = req.user;
 
   cardSchema
-    .create({ name, link, owner })
-    .then((card) => response.status(201).send(card))
+    .create({ name, link, owner: userId })
+    .then((card) => res.status(201).send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        response.status(400)
-          .send({ message: 'Invalid data for card creation' });
+        next(new InaccurateDataError('Переданы некорректные данные при создании карточки'));
       } else {
-        response.status(500)
-          .send({ message: err.message });
+        next(err);
+      }
+    });
+}
+
+const addLike = (request, response, next) => {
+  const { cardId } = request.params;
+  const { userId } = request.user;
+
+  cardSchema
+    .findByIdAndUpdate(
+      cardId,
+      {
+        $addToSet: {
+          likes: userId,
+        },
+      },
+      {
+        new: true,
+      },
+    )
+    .then((card) => {
+      if (card) return response.send({ data: card });
+
+      throw new NotFoundError('Карточка с указанным id не найдена');
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(new InaccurateDataError('Переданы некорректные данные при добавлении лайка карточке'));
+      } else {
+        next(err);
       }
     });
 };
 
-const addLike = (request, response) => {
+const deleteLike = (request, response, next) => {
+  const { cardId } = request.params;
+  const { userId } = request.user;
+
   cardSchema
     .findByIdAndUpdate(
-      request.params.cardId,
-      { $addToSet: { likes: request.user._id } },
-      { new: true },
+      cardId,
+      {
+        $pull: {
+          likes: userId,
+        },
+      },
+      {
+        new: true,
+      },
     )
     .then((card) => {
-      if (!card) {
-        return response.status(404)
-          .send({ message: 'Not found: Invalid _id' });
-      }
+      if (card) return response.send({ data: card });
 
-      return response.status(200)
-        .send(card);
+      throw new NotFoundError('Данные по указанному id не найдены');
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        return response.status(400)
-          .send({ message: 'Invalid data to add like' });
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(new InaccurateDataError('Переданы некорректные данные при снятии лайка карточки'));
+      } else {
+        next(err);
       }
-
-      return response.status(500)
-        .send({ message: err.message });
-    });
-};
-
-const deleteLike = (request, response) => {
-  cardSchema
-    .findByIdAndUpdate(
-      request.params.cardId,
-      { $pull: { likes: request.user._id } },
-      { new: true },
-    )
-    .then((card) => {
-      if (!card) {
-        return response.status(404)
-          .send({ message: 'Not found: Invalid _id' });
-      }
-
-      return response.status(200)
-        .send(card);
-    })
-    .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return response.status(400)
-          .send({ message: 'Invalid data to delete like' });
-      }
-
-      return response.status(500)
-        .send({ message: err.message });
     });
 };
 
