@@ -6,40 +6,33 @@ const NotFoundError = require('../errors/NotFoundError');
 const getCards = (request, response, next) => {
   cardSchema
     .find({})
-    .populate(['owner', 'likes'])
-    .then((cards) => response.send({ data: cards }))
+    .then((cards) => response.send(cards))
     .catch(next);
 };
 
-const deleteCard = (request, response, next) => {
-  const { id: cardId } = request.params;
-  const { userId } = request.user;
-
-  cardSchema
-    .findById({
-      _id: cardId,
-    })
+const deleteCard = (req, res, next) => {
+  const { cardId } = req.params;
+  cardSchema.findById(cardId)
     .then((card) => {
-      if (!card) throw new NotFoundError('Данные по указанному id не найдены');
-
-      const { owner: cardOwnerId } = card;
-      if (cardOwnerId.valueOf() !== userId) throw new ForbiddenError('Нет прав доступа');
-
-      card
-        .remove()
-        .then(() => response.send({ data: card }))
-        .catch(next);
+      if (!card) { throw new NotFoundError('Нет карточки с таким id'); }
+      if (card.owner.toString() !== req.user._id) {
+        throw new ForbiddenError(403, 'Недостаточно прав для выполнения операции');
+      }
+      return card.deleteOne()
+        .then((cardData) => {
+          res.send({ data: cardData });
+        });
     })
     .catch(next);
 };
 
 function createCard(req, res, next) {
   const { name, link } = req.body;
-  const { userId } = req.user;
+  const owner = req.user._id;
 
   cardSchema
-    .create({ name, link, owner: userId })
-    .then((card) => res.status(201).send({ data: card }))
+    .create({ name, link, owner })
+    .then((card) => res.status(201).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new InaccurateDataError('Переданы некорректные данные при создании карточки'));
@@ -50,15 +43,12 @@ function createCard(req, res, next) {
 }
 
 const addLike = (request, response, next) => {
-  const { cardId } = request.params;
-  const { userId } = request.user;
-
   cardSchema
     .findByIdAndUpdate(
-      cardId,
+      request.params.cardId,
       {
         $addToSet: {
-          likes: userId,
+          likes: request.user._id,
         },
       },
       {
@@ -66,7 +56,7 @@ const addLike = (request, response, next) => {
       },
     )
     .then((card) => {
-      if (card) return response.send({ data: card });
+      if (card) return response.send(card);
 
       throw new NotFoundError('Карточка с указанным id не найдена');
     })
@@ -80,15 +70,12 @@ const addLike = (request, response, next) => {
 };
 
 const deleteLike = (request, response, next) => {
-  const { cardId } = request.params;
-  const { userId } = request.user;
-
   cardSchema
     .findByIdAndUpdate(
-      cardId,
+      request.params.cardId,
       {
         $pull: {
-          likes: userId,
+          likes: request.user._id,
         },
       },
       {
@@ -96,7 +83,7 @@ const deleteLike = (request, response, next) => {
       },
     )
     .then((card) => {
-      if (card) return response.send({ data: card });
+      if (card) return response.send(card);
 
       throw new NotFoundError('Данные по указанному id не найдены');
     })

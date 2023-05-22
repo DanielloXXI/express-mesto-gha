@@ -31,9 +31,8 @@ const getUserById = (req, res, next) => {
 };
 
 const getMe = (req, res, next) => {
-  const { userId } = req.user;
   User
-    .findById(userId)
+    .findById(req.user._id)
     .then((user) => {
       if (user) return res.send({ user });
 
@@ -89,11 +88,10 @@ const createUser = (req, res, next) => {
 
 const updateUser = (request, response, next) => {
   const { name, about } = request.body;
-  const { userId } = request.user;
 
   User
     .findByIdAndUpdate(
-      userId,
+      request.user._id,
       {
         name,
         about,
@@ -119,11 +117,10 @@ const updateUser = (request, response, next) => {
 
 const updateAvatar = (request, response, next) => {
   const { avatar } = request.body;
-  const { userId } = request.user;
 
   User
     .findByIdAndUpdate(
-      userId,
+      request.user._id,
       {
         avatar,
       },
@@ -151,15 +148,15 @@ function login(req, res, next) {
 
   User
     .findUserByCredentials(email, password)
-    .then(({ _id: userId }) => {
-      if (userId) {
+    .then((user) => {
+      if (user._id) {
         const token = jwt.sign(
-          { userId },
+          { _id: user._id },
           'some-secret-key',
           { expiresIn: '7d' },
         );
 
-        return res.send({ _id: token });
+        return res.send({ token });
       }
 
       throw new UnauthorizedError('Неправильные почта или пароль');
