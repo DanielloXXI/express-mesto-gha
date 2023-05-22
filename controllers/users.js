@@ -8,7 +8,7 @@ const InaccurateDataError = require('../errors/InaccurateDataError');
 const getAllUsers = (req, res, next) => {
   User
     .find({})
-    .then((users) => res.send({ users }))
+    .then((users) => res.send(users))
     .catch(next);
 };
 
@@ -50,9 +50,9 @@ const createUser = (req, res, next) => {
   const {
     email,
     password,
-    name,
-    about,
-    avatar,
+    name = 'Жак-Ив Кусто',
+    about = 'Исследователь',
+    avatar = 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
   } = req.body;
 
   bcrypt.hash(password, 10)
@@ -66,12 +66,12 @@ const createUser = (req, res, next) => {
     .then((user) => {
       const { _id } = user;
 
-      return res.status(201).send({
-        email,
+      res.send({
+        _id,
         name,
         about,
         avatar,
-        _id,
+        email,
       });
     })
     .catch((err) => {
