@@ -34,20 +34,12 @@ const getUserById = (req, res, next) => {
 };
 
 const getMe = (req, res, next) => {
-  User
-    .findById(req.user._id)
-    .then((user) => {
-      if (user) return res.send({ user });
-
-      throw new NotFoundError('Пользователь с таким id не найден');
+  User.findById(req.user._id)
+    .orFail(() => {
+      next(new NotFoundError('пользователь с таким id - отсутствует'));
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new InaccurateDataError('Передан некорректный id'));
-      } else {
-        next(err);
-      }
-    });
+    .then((user) => res.send({ data: user }))
+    .catch(next);
 };
 
 const createUser = (req, res, next) => {
