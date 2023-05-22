@@ -1,19 +1,20 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
 const userSchema = new mongoose.Schema({
   name: { // у пользователя есть имя — опишем требования к имени в схеме:
     type: String, // имя — это строка
     required: [false], // оно должно быть у каждого пользователя, так что имя — обязательное поле
-    default: ['Жак-Ив Кусто'],
+    default: 'Жак-Ив Кусто',
     minlength: [2, 'Минимальная длина поля "name" - 2'], // минимальная длина имени — 2 символа
     maxlength: [30, 'Максимальная длина поля "name" - 30'], // а максимальная — 30 символов
   },
   about: {
     type: String,
     required: [false],
-    default: ['Исследователь'],
+    default: 'Исследователь',
     minlength: [2, 'Минимальная длина поля "about" - 2'],
     maxlength: [30, 'Максимальная длина поля "about" - 30'],
   },
@@ -48,19 +49,17 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.statics.findUserByCredentials = function (email, password) {
-  return this.findOne({ email })
+  return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
+        throw new UnauthorizedError('Неправильные email или пароль');
       }
-
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+            throw new UnauthorizedError('Неправильные email или пароль');
           }
-
-          return user; // теперь user доступен
+          return user;
         });
     });
 };
