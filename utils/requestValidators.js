@@ -6,12 +6,14 @@ module.exports.signUpBodyValidator = celebrate({
     about: Joi.string().min(2).max(30),
     avatar: Joi.string().pattern(/^(https?|ftp|file):\/\/[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]/),
     email: Joi.string().required().email(),
+    password: Joi.string().required().pattern(/^[a-zA-Z0-9]{3,30}$/),
   }),
 });
 
 module.exports.signInBodyValidator = celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
+    password: Joi.string().required().pattern(/^[a-zA-Z0-9]{3,30}$/),
   }),
 });
 
