@@ -26,7 +26,7 @@ const getUserById = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'DocumentNotFoundError') {
-        next(new NotFoundError({ message: 'пользователь с таким id - отсутствует' }));
+        next(new NotFoundError('пользователь с таким id - отсутствует'));
       } else {
         next(err);
       }
@@ -35,18 +35,16 @@ const getUserById = (req, res, next) => {
 
 const getMe = (req, res, next) => {
   User.findById(req.user._id)
-    .orFail(() => {
-      next(new NotFoundError('пользователь с таким id - отсутствует'));
-    })
+    .orFail(new NotFoundError('пользователь с таким id - отсутствует'))
     .then((user) => res.send({ data: user }))
     .catch(next);
 };
 
 const createUser = (req, res, next) => {
   const {
-    name = 'Жак-Ив Кусто',
-    about = 'Исследователь',
-    avatar = 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    name,
+    about,
+    avatar,
     email,
     password,
   } = req.body;
@@ -124,6 +122,7 @@ const updateAvatar = (request, response, next) => {
     )
     .then((user) => response.status(200)
       .send(user))
+    .orFail()
     .catch((err) => {
       if (err.name === 'DocumentNotFoundError') {
         next(new NotFoundError('пользователь с таким id - отсутствует'));

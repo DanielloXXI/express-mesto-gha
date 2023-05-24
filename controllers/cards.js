@@ -16,7 +16,7 @@ const deleteCard = (req, res, next) => {
     .then((card) => {
       if (!card) { throw new NotFoundError('Нет карточки с таким id'); }
       if (card.owner.toString() !== req.user._id) {
-        throw new ForbiddenError(403, 'Недостаточно прав для выполнения операции');
+        throw new ForbiddenError('Недостаточно прав для выполнения операции');
       }
       return card.deleteOne()
         .then((cardData) => {
@@ -61,7 +61,7 @@ const addLike = (request, response, next) => {
       throw new NotFoundError('Карточка с указанным id не найдена');
     })
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
+      if (err.name === 'CastError') {
         next(new InaccurateDataError('Переданы некорректные данные при добавлении лайка карточке'));
       } else {
         next(err);
@@ -88,7 +88,7 @@ const deleteLike = (request, response, next) => {
       throw new NotFoundError('Данные по указанному id не найдены');
     })
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
+      if (err.name === 'CastError') {
         next(new InaccurateDataError('Переданы некорректные данные при снятии лайка карточки'));
       } else {
         next(err);

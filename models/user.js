@@ -38,10 +38,6 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Поле "password" должно быть заполнено'],
-    validate: {
-      validator: (v) => validator.isStrongPassword(v),
-      message: 'Придумайте пароль посложнее',
-    },
     select: false,
   },
   __v: { type: Number, select: false },
