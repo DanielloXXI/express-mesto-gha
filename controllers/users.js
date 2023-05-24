@@ -120,9 +120,9 @@ const updateAvatar = (request, response, next) => {
         runValidators: true,
       },
     )
+    .orFail()
     .then((user) => response.status(200)
       .send(user))
-    .orFail()
     .catch((err) => {
       if (err.name === 'DocumentNotFoundError') {
         next(new NotFoundError('пользователь с таким id - отсутствует'));
