@@ -15,7 +15,7 @@ const app = express();
 //   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
 //   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 // });
-app.use(limiter);
+// app.use(limiter);
 app.use(helmet());
 app.use(cookieParser()); // подключаем парсер кук как мидлвэр
 app.use(bodyParser.json());
